@@ -25,9 +25,7 @@ jobs:
 
       - name: Check if S3 bucket exists or create it
         run: |
-          if aws s3 ls s3://${{ env.BUCKET_NAME }}; then
-            echo "Bucket exists"
-          else
+          if aws s3 ls s3://${{ env.BUCKET_NAME }} 2>&1 | grep -q 'NoSuchBucket'; then
             echo "Bucket does not exist, creating..."
             aws s3 mb s3://${{ env.BUCKET_NAME }}
             
@@ -43,8 +41,10 @@ jobs:
                 }
               ]
             }'
+          else
+            echo "Bucket exist, proceeding"
           fi
 
       - name: Deploy to S3 bucket
         run: |
-          aws s3 sync ./ s3://${{ env.BUCKET_NAME }}
+          aws s3 sync ./ s3://${{ env.BUCKET_NAME }} --exclude ".git/*" --exclude ".github/*" --delete
